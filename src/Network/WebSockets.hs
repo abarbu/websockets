@@ -70,6 +70,7 @@ module Network.WebSockets
 
       -- * Running a client
     , ClientApp
+    , ClientApp'
     , runClient
     , runClientWith
     , runClientWithSocket
