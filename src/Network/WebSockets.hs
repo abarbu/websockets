@@ -34,10 +34,13 @@ module Network.WebSockets
     , receiveData
     , send
     , sendDataMessage
+    , sendDataMessages
     , sendTextData
     , sendTextDatas
     , sendBinaryData
+    , sendBinaryDatas
     , sendClose
+    , sendCloseCode
     , sendPing
 
       -- * HTTP Types
@@ -75,6 +78,7 @@ module Network.WebSockets
     , runClientWith
     , runClientWithSocket
     , runClientWithStream
+    , newClientConnection
 
       -- * Utilities
     , forkPingThread

@@ -1,3 +1,45 @@
+# CHANGELOG
+
+- 0.12.5.3 (2019-01-31)
+    * Bump `network` dependency to 3.0
+
+- 0.12.5.2 (2018-09-25)
+    * Bump `containers` dependency to 0.6
+    * Bump `network` dependency to 2.8
+    * Bump `QuickCheck` dependency to 2.12
+    * Bump `binary` dependency to 0.10
+
+- 0.12.5.1 (2018-06-12)
+    * Fix build with GHC 7.6 and 7.8
+
+- 0.12.5.0 (2018-06-01)
+    * Add `newClientConnection` (by Renzo Carbonara)
+
+- 0.12.4.1 (2018-05-11)
+    * Bump `network` dependency to 2.7
+
+- 0.12.4.0 (2018-03-13)
+    * Remove `blaze-builder` dependency
+    * Bump `streaming-commons` dependency to 0.2
+    * Bump `QuickCheck` dependency to 2.11
+    * Fix compatibility with old GHC versions
+    * Re-export more functions from `Network.WebSockets`
+        - `sendDataMessages`
+        - `sendBinaryDatas`
+        - `sendCloseCode`
+    * Don't crash when sending the empty list of messages
+    * Add `SemiGroup` instance for `SizeLimit`
+
+- 0.12.3.1 (2018-01-10)
+    * Bump CHANGELOG with IPv6 warning
+    * Run all autobahn tests during CI
+
+- 0.12.3.0 (2018-01-02)
+    * Fix error thrown from runClient functions
+    * Bump `QuickCheck` dependency to 2.10
+    * Bump `entropy` dependency to 0.4
+    * Bump `binary` dependency to 0.10
+
 - 0.12.2.0 (2017-07-28)
     * Don't use LambdaCase, we want to support older GHC versions
 
@@ -22,8 +64,11 @@
     * Fix compilation issue with GHC-7.8
 
 - 0.11.0.0
+    * Support for IPv6 in the built-in server, client and tests (by agentm).
+      This can cause issues on backends that do not enable IPv6.  For more
+      information and a workaround, see this issue:
+      <https://github.com/jaspervdj/websockets/issues/140#issuecomment-296732964>.
     * Faster masking (by Dmitry Ivanov)
-    * Support for IPv6 in the built-in server, client and tests (by agentm)
     * Support for `permessage-deflate` extension (by Marcin Tolysz)
     * Strict unicode checking and proper extension mechanism
 

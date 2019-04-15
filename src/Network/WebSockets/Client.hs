@@ -9,11 +9,12 @@ module Network.WebSockets.Client
     , runClientWith
     , runClientWithSocket
     , runClientWithStream
+    , newClientConnection
     ) where
 
 
 --------------------------------------------------------------------------------
-import qualified Blaze.ByteString.Builder      as Builder
+import qualified Data.ByteString.Builder      as Builder
 import           Control.Monad                 (void)
 import           Data.IORef                    (newIORef)
 import qualified Data.Text                     as T
@@ -22,7 +23,7 @@ import qualified Network.Socket                as S
 import           Control.Monad.Base
 import           Control.Monad.Trans.Control
 import           Control.Exception.Lifted      (bracket, finally, throwIO)
-
+import           Control.Monad.Fail
 
 --------------------------------------------------------------------------------
 import           Network.WebSockets.Connection
@@ -46,7 +47,7 @@ type ClientApp' m a = Connection -> m a
 
 --------------------------------------------------------------------------------
 -- TODO: Maybe this should all be strings
-runClient :: (MonadBase IO m, MonadBaseControl IO m) =>
+runClient :: (MonadBase IO m, MonadBaseControl IO m, MonadFail m) =>
             String       -- ^ Host
           -> Int          -- ^ Port
           -> String       -- ^ Path
@@ -57,7 +58,7 @@ runClient host port path ws =
 
 
 --------------------------------------------------------------------------------
-runClientWith :: (MonadBase IO m, MonadBaseControl IO m) =>
+runClientWith :: (MonadBase IO m, MonadBaseControl IO m, MonadFail m) =>
                 String             -- ^ Host
               -> Int                -- ^ Port
               -> String             -- ^ Path
@@ -88,8 +89,9 @@ runClientWith host port path0 opts customHeaders app = do
 
 
 --------------------------------------------------------------------------------
+
 runClientWithStream
-    :: (MonadBase IO m, MonadBaseControl IO m) =>
+    :: (MonadBase IO m, MonadBaseControl IO m, MonadFail m) =>
       Stream
     -- ^ Stream
     -> String
@@ -104,6 +106,27 @@ runClientWithStream
     -- ^ Client application
     -> m a
 runClientWithStream stream host path opts customHeaders app = do
+    newClientConnection stream host path opts customHeaders >>= app
+
+-- | Build a new 'Connection' from the client's point of view.
+--
+-- /WARNING/: Be sure to call 'Stream.close' on the given 'Stream' after you are
+-- done using the 'Connection' in order to properly close the communication
+-- channel. 'runClientWithStream' handles this for you, prefer to use it when
+-- possible.
+newClientConnection :: (MonadBase IO m, MonadBaseControl IO m, MonadFail m)
+    => Stream
+    -- ^ Stream that will be used by the new 'Connection'.
+    -> String
+    -- ^ Host
+    -> String
+    -- ^ Path
+    -> ConnectionOptions
+    -- ^ Connection options
+    -> Headers
+    -- ^ Custom headers to send
+    -> m Connection
+newClientConnection stream host path opts customHeaders = do
     -- Create the request and send it
     request    <- liftBase $ createRequest protocol bHost bPath False customHeaders
     liftBase $ Stream.write stream (Builder.toLazyByteString $ encodeRequestHead request)
@@ -111,7 +134,7 @@ runClientWithStream stream host path opts customHeaders app = do
     response   <- case mbResponse of
         Just response -> return response
         Nothing       -> throwIO $ OtherHandshakeException $
-            "Network.WebSockets.Client.runClientWithStream: no handshake " ++
+            "Network.WebSockets.Client.newClientConnection: no handshake " ++
             "response from server"
     void $ either throwIO return $ finishResponse protocol request response
     parse   <- liftBase $ decodeMessages protocol
@@ -120,7 +143,7 @@ runClientWithStream stream host path opts customHeaders app = do
     write   <- liftBase $ encodeMessages protocol ClientConnection stream
     sentRef <- liftBase $ newIORef False
 
-    app Connection
+    return $ Connection
         { connectionOptions   = opts
         , connectionType      = ClientConnection
         , connectionProtocol  = protocol
@@ -135,7 +158,7 @@ runClientWithStream stream host path opts customHeaders app = do
 
 
 --------------------------------------------------------------------------------
-runClientWithSocket :: (MonadBase IO m, MonadBaseControl IO m) =>
+runClientWithSocket :: (MonadBase IO m, MonadBaseControl IO m, MonadFail m) =>
                       S.Socket           -- ^ Socket
                     -> String             -- ^ Host
                     -> String             -- ^ Path

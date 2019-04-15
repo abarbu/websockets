@@ -43,7 +43,7 @@ module Network.WebSockets.Connection
 
 
 --------------------------------------------------------------------------------
-import qualified Blaze.ByteString.Builder                        as Builder
+import qualified Data.ByteString.Builder                         as Builder
 import           Control.Applicative                             ((<$>))
 import           Control.Concurrent                              (forkIO,
                                                                   threadDelay)
@@ -309,6 +309,7 @@ send conn = sendAll conn . return
 
 --------------------------------------------------------------------------------
 sendAll :: Connection -> [Message] -> IO ()
+sendAll _    []   = return ()
 sendAll conn msgs = do
     when (any isCloseMessage msgs) $
       writeIORef (connectionSentClose conn) True
